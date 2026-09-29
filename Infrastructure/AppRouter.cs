@@ -12,10 +12,6 @@ using Sinerfin.Repositories;
 
 namespace Sinerfin.Infrastructure
 {
-    /// <summary>
-    /// OWIN middleware that handles all HTML routes (login, dashboard, movimiento, consulta, usuarios).
-    /// Completely replaces MVC 5 + Razor + System.Web.SessionState.
-    /// </summary>
     public class AppRouter : OwinMiddleware
     {
         private readonly DbConnectionFactory _factory;
@@ -35,7 +31,6 @@ namespace Sinerfin.Infrastructure
             var path = req.Path.Value != null ? req.Path.Value.ToLowerInvariant() : "/";
             if (path == "") path = "/";
 
-            // ── static: pass through to next middleware (Web API) ─────
             if (path.StartsWith("/cliente") || path.StartsWith("/api"))
             {
                 await Next.Invoke(ctx);
@@ -47,19 +42,16 @@ namespace Sinerfin.Infrastructure
 
             resp.ContentType = "text/html; charset=utf-8";
 
-            // ── GET /login ────────────────────────────────────────────
             if ((path == "/" || path == "/login") && req.Method == "GET")
             {
                 if (hasSession) { Redirect(resp, "/dashboard"); return; }
-                var error = req.Query["error"];
-                await WriteHtml(resp, HtmlTemplates.Login(error));
+                await WriteHtml(resp, HtmlTemplates.Login(req.Query["error"]));
                 return;
             }
 
-            // ── POST /login ───────────────────────────────────────────
             if (path == "/login" && req.Method == "POST")
             {
-                var form = await ReadFormAsync(req);
+                var form     = await ReadFormAsync(req);
                 var db       = form["db"]       ?? "";
                 var username = form["username"] ?? "";
                 var password = form["password"] ?? "";
@@ -76,7 +68,6 @@ namespace Sinerfin.Infrastructure
                         var row = conn.QueryFirstOrDefault(
                             "SELECT usuario, password_hash, nombre FROM " + tabla + " WHERE usuario = @u",
                             new { u = username });
-
                         if (row != null)
                         {
                             string hash   = row.password_hash ?? "";
@@ -99,7 +90,6 @@ namespace Sinerfin.Infrastructure
                 return;
             }
 
-            // ── GET /logout ───────────────────────────────────────────
             if (path == "/logout")
             {
                 SessionHelper.ClearSession(resp);
@@ -107,28 +97,20 @@ namespace Sinerfin.Infrastructure
                 return;
             }
 
-            // ── all routes below require session ──────────────────────
-            if (!hasSession)
-            {
-                Redirect(resp, "/login");
-                return;
-            }
+            if (!hasSession) { Redirect(resp, "/login"); return; }
 
-            // ── GET /dashboard ────────────────────────────────────────
             if (path == "/dashboard" && req.Method == "GET")
             {
                 await WriteHtml(resp, HtmlTemplates.Dashboard(user, dbType));
                 return;
             }
 
-            // ── GET /movimiento ───────────────────────────────────────
             if (path == "/movimiento" && req.Method == "GET")
             {
                 await WriteHtml(resp, HtmlTemplates.Movimiento(null, user, dbType));
                 return;
             }
 
-            // ── POST /movimiento ──────────────────────────────────────
             if (path == "/movimiento" && req.Method == "POST")
             {
                 Models.DbProvider p;
@@ -150,11 +132,10 @@ namespace Sinerfin.Infrastructure
                 }
                 try
                 {
-                    var numeroCuenta = _repo.ObtenerOCrearCuenta(p, cedula, nombre);
-                    _repo.Guardar(p, new Movimiento
-                    {
+                    var nc = _repo.ObtenerOCrearCuenta(p, cedula, nombre);
+                    _repo.Guardar(p, new Movimiento {
                         Cedula = cedula, Nombre = nombre,
-                        NumeroCuenta = numeroCuenta, TipoMovimiento = tipo, Valor = monto
+                        NumeroCuenta = nc, TipoMovimiento = tipo, Valor = monto
                     });
                     Redirect(resp, "/consulta?cedula=" + Uri.EscapeDataString(cedula));
                 }
@@ -165,14 +146,13 @@ namespace Sinerfin.Infrastructure
                 return;
             }
 
-            // ── GET /consulta ─────────────────────────────────────────
             if (path == "/consulta" && req.Method == "GET")
             {
                 Models.DbProvider p;
                 if (!Enum.TryParse(dbType, out p)) { Redirect(resp, "/login"); return; }
 
                 var cedula = req.Query["cedula"];
-                IEnumerable<Movimiento> lista       = null;
+                IEnumerable<Movimiento> lista = null;
                 string saldo = null, numeroCuenta = null, nombreCliente = null;
 
                 if (!string.IsNullOrWhiteSpace(cedula))
@@ -192,7 +172,6 @@ namespace Sinerfin.Infrastructure
                 return;
             }
 
-            // ── GET /usuarios ─────────────────────────────────────────
             if (path == "/usuarios" && req.Method == "GET")
             {
                 Models.DbProvider p;
@@ -210,23 +189,23 @@ namespace Sinerfin.Infrastructure
                 catch (Exception ex) { errorMsg = "Error al listar usuarios: " + ex.Message; }
 
                 await WriteHtml(resp,
-                    HtmlTemplates.Usuarios(user, dbType, lista, req.Query["ok"], errorMsg ?? req.Query["error"]));
+                    HtmlTemplates.Usuarios(user, dbType, lista,
+                        req.Query["ok"], errorMsg ?? req.Query["error"]));
                 return;
             }
 
-            // ── POST /usuarios ────────────────────────────────────────
             if (path == "/usuarios" && req.Method == "POST")
             {
                 Models.DbProvider p;
                 if (!Enum.TryParse(dbType, out p)) { Redirect(resp, "/login"); return; }
 
                 var form   = await ReadFormAsync(req);
-                var accion = form["accion"]   ?? "";
-                var id     = form["id"]        ?? "";
-                var usu    = form["usuario"]   ?? "";
-                var nom    = form["nombre"]    ?? "";
-                var pwd    = form["password"]  ?? "";
-                var conf   = form["confirm"]   ?? "";
+                var accion = form["accion"]  ?? "";
+                var id     = form["id"]      ?? "";
+                var usu    = form["usuario"] ?? "";
+                var nom    = form["nombre"]  ?? "";
+                var pwd    = form["password"]?? "";
+                var conf   = form["confirm"] ?? "";
 
                 if (accion == "eliminar")
                 {
@@ -238,7 +217,7 @@ namespace Sinerfin.Infrastructure
                         Redirect(resp, "/usuarios?ok=eliminado");
                     }
                     catch (Exception ex)
-                        { Redirect(resp, "/usuarios?error=" + Uri.EscapeDataString(ex.Message)); }
+                    { Redirect(resp, "/usuarios?error=" + Uri.EscapeDataString(ex.Message)); }
                     return;
                 }
 
@@ -267,13 +246,11 @@ namespace Sinerfin.Infrastructure
                 return;
             }
 
-            // ── 404 ───────────────────────────────────────────────────
             resp.StatusCode = 404;
             await WriteHtml(resp, HtmlTemplates.Layout("404",
-                "<div style='padding:60px;text-align:center;color:#64748b;'><h2>404 - No encontrado</h2></div>"));
+                "<div style='padding:60px;text-align:center;color:#64748b;'><h2>404</h2></div>"));
         }
 
-        // ── helpers ───────────────────────────────────────────────────
         private static void Redirect(IOwinResponse resp, string url)
         {
             resp.StatusCode = 302;
@@ -284,7 +261,7 @@ namespace Sinerfin.Infrastructure
         {
             resp.StatusCode = 200;
             var bytes = Encoding.UTF8.GetBytes(html);
-            resp.ContentLength = (long)bytes.Length;   // explicit cast int -> long
+            // Do NOT set ContentLength — avoid long/int ambiguity; chunked transfer works fine
             return resp.Body.WriteAsync(bytes, 0, bytes.Length);
         }
 
