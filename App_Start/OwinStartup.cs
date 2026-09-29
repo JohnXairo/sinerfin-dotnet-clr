@@ -1,11 +1,11 @@
 using System.Web.Http;
-using System.Web.Mvc;
 using Microsoft.Owin;
 using Microsoft.Owin.Cors;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Owin;
 using Sinerfin.Config;
+using Sinerfin.Infrastructure;
 using Sinerfin.Repositories;
 
 [assembly: OwinStartup(typeof(Sinerfin.OwinStartup))]
@@ -24,15 +24,8 @@ namespace Sinerfin
             var factory  = new DbConnectionFactory(settings);
             var repo     = new MovimientoRepository(factory);
 
-            // ── MVC 5 DI ──────────────────────────────────────────────
-            DependencyResolver.SetResolver(
-                new Infrastructure.SimpleMvcDependencyResolver(factory, repo));
-
-            // ── Rutas MVC 5 ───────────────────────────────────────────
-            // NOTA: AreaRegistration.RegisterAllAreas() NO se puede llamar
-            // en OWIN self-host — lanza InvalidOperationException.
-            // No usamos Areas, se omite sin problema.
-            MvcConfig.Register(System.Web.Routing.RouteTable.Routes);
+            // ── HTML router middleware (reemplaza MVC 5 + Razor) ──────
+            app.Use<AppRouter>(factory, repo);
 
             // ── Web API 2 (/cliente JSON endpoint) ────────────────────
             var apiConfig = new HttpConfiguration();
@@ -46,7 +39,7 @@ namespace Sinerfin
                 new { controller = "Cliente" });
 
             apiConfig.DependencyResolver =
-                new Infrastructure.SimpleApiDependencyResolver(factory, repo);
+                new SimpleApiDependencyResolver(factory, repo);
 
             app.UseWebApi(apiConfig);
         }
