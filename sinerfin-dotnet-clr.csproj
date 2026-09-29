@@ -36,6 +36,8 @@
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Routing" />
     <Reference Include="System.Xml" />
+    <!-- Requerido para soporte de 'dynamic' (Dapper usa dynamic internamente) -->
+    <Reference Include="Microsoft.CSharp" />
 
     <!-- ASP.NET MVC 5 -->
     <Reference Include="System.Web.Mvc">
