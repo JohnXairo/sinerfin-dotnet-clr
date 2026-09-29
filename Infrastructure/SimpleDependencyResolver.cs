@@ -1,17 +1,18 @@
 using System;
 using System.Collections.Generic;
-using System.Web.Http.Dependencies;
-using System.Web.Mvc;
 using Sinerfin.Config;
 using Sinerfin.Controllers;
 using Sinerfin.Repositories;
 
 namespace Sinerfin.Infrastructure
 {
-    /// <summary>DI resolver para MVC 5 controllers.</summary>
-    public class SimpleMvcDependencyResolver : IDependencyResolver
+    /// <summary>
+    /// DI resolver para MVC 5 controllers.
+    /// Implementa System.Web.Mvc.IDependencyResolver (interfaz de MVC).
+    /// </summary>
+    public class SimpleMvcDependencyResolver : System.Web.Mvc.IDependencyResolver
     {
-        private readonly DbConnectionFactory _factory;
+        private readonly DbConnectionFactory  _factory;
         private readonly MovimientoRepository _repo;
 
         public SimpleMvcDependencyResolver(DbConnectionFactory factory, MovimientoRepository repo)
@@ -30,14 +31,19 @@ namespace Sinerfin.Infrastructure
             return null;
         }
 
-        public IEnumerable<object> GetServices(Type serviceType) => new List<object>();
-        public void ReleaseScope() { }
+        public IEnumerable<object> GetServices(Type serviceType)
+        {
+            return new List<object>();
+        }
     }
 
-    /// <summary>DI resolver para Web API 2 (ClienteController).</summary>
+    /// <summary>
+    /// DI resolver para Web API 2 (ClienteController JSON endpoint).
+    /// Implementa System.Web.Http.Dependencies.IDependencyResolver (interfaz de Web API).
+    /// </summary>
     public class SimpleApiDependencyResolver : System.Web.Http.Dependencies.IDependencyResolver
     {
-        private readonly DbConnectionFactory _factory;
+        private readonly DbConnectionFactory  _factory;
         private readonly MovimientoRepository _repo;
 
         public SimpleApiDependencyResolver(DbConnectionFactory factory, MovimientoRepository repo)
@@ -52,8 +58,16 @@ namespace Sinerfin.Infrastructure
             return null;
         }
 
-        public IEnumerable<object> GetServices(Type serviceType) => new List<object>();
-        public IDependencyScope BeginScope() => this;
+        public IEnumerable<object> GetServices(Type serviceType)
+        {
+            return new List<object>();
+        }
+
+        public System.Web.Http.Dependencies.IDependencyScope BeginScope()
+        {
+            return this;
+        }
+
         public void Dispose() { }
     }
 }
