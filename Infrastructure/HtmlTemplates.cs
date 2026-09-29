@@ -7,7 +7,6 @@ namespace Sinerfin.Infrastructure
 {
     public static class HtmlTemplates
     {
-        // ── shared CSS ────────────────────────────────────────────────
         private const string CSS = @"
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0b1120;color:#e2e8f0;font-family:-apple-system,Segoe UI,sans-serif;font-size:15px;line-height:1.5}
@@ -42,7 +41,6 @@ td{padding:10px 14px;border-bottom:1px solid #1e293b;font-size:13px}
 .table-container{overflow-x:auto}
 ";
 
-        // ── layout wrapper ────────────────────────────────────────────
         public static string Layout(string title, string body, bool navbar = false,
             string navUser = null, string navDb = null)
         {
@@ -54,7 +52,8 @@ td{padding:10px 14px;border-bottom:1px solid #1e293b;font-size:13px}
             {
                 sb.Append("<div class=\"navbar\"><div><b style=\"color:#a3e635;\">Sinerfin</b></div><div>");
                 if (navDb != null)
-                    sb.AppendFormat("<span style=\"font-size:12px;color:#64748b;\">Motor: <b style=\"color:#a3e635;\">{0}</b></span>&nbsp;&nbsp;",
+                    sb.AppendFormat(
+                        "<span style=\"font-size:12px;color:#64748b;\">Motor: <b style=\"color:#a3e635;\">{0}</b></span>&nbsp;&nbsp;",
                         HE(navDb));
                 sb.Append("<a href=\"/dashboard\">Dashboard</a>");
                 sb.Append("<a href=\"/movimiento\">Transacciones</a>");
@@ -68,17 +67,16 @@ td{padding:10px 14px;border-bottom:1px solid #1e293b;font-size:13px}
             return sb.ToString();
         }
 
-        // ── login page ────────────────────────────────────────────────
         public static string Login(string error = null)
         {
             var alert = "";
             if (error == "1") alert = "<div class=\"alert-error\">Usuario o contrase&ntilde;a incorrectos.</div>";
             else if (error == "2") alert = "<div class=\"alert-error\">No se pudo conectar a la base de datos.</div>";
 
-            var body = $@"
+            var body = string.Format(@"
 <div class='container'><div class='card'>
 <div class='logo'>Sinerfin</div>
-{alert}
+{0}
 <form action='/login' method='post'>
   Usuario:<input name='username' autocomplete='username' required>
   Contrase&ntilde;a:<input type='password' name='password' autocomplete='current-password' required>
@@ -95,33 +93,34 @@ td{padding:10px 14px;border-bottom:1px solid #1e293b;font-size:13px}
 </form>
 </div></div>
 <script>function sel(el){{document.querySelectorAll('.db-card').forEach(function(e){{e.classList.remove('selected');}});el.classList.add('selected')}}</script>
-";
+", alert);
             return Layout("Login", body);
         }
 
-        // ── dashboard page ────────────────────────────────────────────
         public static string Dashboard(string user, string dbType)
         {
-            var body = $@"
+            var body = string.Format(@"
 <div class='dashboard'>
   <h1>Core Bancario Demo</h1>
-  <p style='color:#64748b;margin-bottom:8px;'>Bienvenido, <b style='color:white;'>{HE(user)}</b></p>
-  <p style='margin-bottom:28px;'>Motor activo: <b style='color:#a3e635;'>{HE(dbType)}</b></p>
+  <p style='color:#64748b;margin-bottom:8px;'>Bienvenido, <b style='color:white;'>{0}</b></p>
+  <p style='margin-bottom:28px;'>Motor activo: <b style='color:#a3e635;'>{1}</b></p>
   <a href='/movimiento'><button style='width:250px;'>Realizar Transacci&oacute;n</button></a>
   <br><br>
   <a href='/consulta'><button style='width:250px;'>Consultar Movimientos</button></a>
-</div>";
+</div>", HE(user), HE(dbType));
             return Layout("Dashboard", body, navbar: true, navUser: user, navDb: dbType);
         }
 
-        // ── movimiento page ───────────────────────────────────────────
         public static string Movimiento(string errorMsg, string user, string dbType)
         {
-            var alert = errorMsg != null ? $"<div class='alert-error'>{HE(errorMsg)}</div>" : "";
-            var body = $@"
+            var alert = errorMsg != null
+                ? "<div class='alert-error'>" + HE(errorMsg) + "</div>"
+                : "";
+            // Pass dbType in fetch URL so ClienteController can read it (no HttpContext.Current in self-host)
+            var body = string.Format(@"
 <div class='container'><div class='card'>
   <h2 style='margin-bottom:20px;'>Transacci&oacute;n</h2>
-  {alert}
+  {0}
   <div id='cliente-card' style='display:none;background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:14px 18px;margin-bottom:18px;'>
     <div style='font-size:11px;color:#64748b;margin-bottom:6px;'>Cliente encontrado</div>
     <div style='display:flex;gap:24px;align-items:center;flex-wrap:wrap;'>
@@ -145,7 +144,7 @@ td{padding:10px 14px;border-bottom:1px solid #1e293b;font-size:13px}
   </form>
 </div></div>
 <script>
-(function(){{var ci=document.getElementById('cedula'),ni=document.getElementById('nombre'),
+(function(){{var DB='{1}',ci=document.getElementById('cedula'),ni=document.getElementById('nombre'),
     st=document.getElementById('cedula-status'),cc=document.getElementById('cliente-card'),t=null;
   function reset(){{cc.style.display='none';ni.readOnly=false;ni.value='';ni.style.color='';st.style.display='none';}}
   function show(d){{document.getElementById('cli-nombre').textContent=d.nombre;
@@ -155,14 +154,13 @@ td{padding:10px 14px;border-bottom:1px solid #1e293b;font-size:13px}
     st.textContent='\u2713';st.style.color='#22c55e';st.style.display='inline';}}
   ci.addEventListener('input',function(){{reset();clearTimeout(t);
     if(ci.value.trim().length>=6){{st.textContent='\u27f3';st.style.color='#94a3b8';st.style.display='inline';
-      t=setTimeout(function(){{fetch('/cliente?cedula='+encodeURIComponent(ci.value.trim()))
+      t=setTimeout(function(){{fetch('/cliente?cedula='+encodeURIComponent(ci.value.trim())+'&db='+DB)
         .then(function(r){{return r.json();}}).then(function(d){{d.encontrado?show(d):reset();}}).catch(reset);}},600);}}}});
 }})();
-</script>";
+</script>", alert, HE(dbType));
             return Layout("Transacci\u00f3n", body, navbar: true, navUser: user, navDb: dbType);
         }
 
-        // ── consulta page ─────────────────────────────────────────────
         public static string Consulta(string user, string dbType, string cedula,
             IEnumerable<Movimiento> lista, string saldo, string numeroCuenta, string nombreCliente)
         {
@@ -187,15 +185,18 @@ td{padding:10px 14px;border-bottom:1px solid #1e293b;font-size:13px}
                 if (saldo != null)
                 {
                     sb.Append("<div style='display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap;'>");
-                    sb.AppendFormat("<div class='saldo-card' style='padding:20px 28px;border-radius:12px;min-width:200px;'>" +
+                    sb.AppendFormat(
+                        "<div class='saldo-card' style='padding:20px 28px;border-radius:12px;min-width:200px;'>" +
                         "<div style='font-size:12px;color:#94a3b8;'>Saldo actual</div>" +
                         "<div style='color:#a3e635;font-size:28px;font-weight:bold;'>${0}</div></div>", HE(saldo));
                     if (numeroCuenta != null)
-                        sb.AppendFormat("<div class='saldo-card' style='padding:20px 28px;border-radius:12px;min-width:200px;'>" +
+                        sb.AppendFormat(
+                            "<div class='saldo-card' style='padding:20px 28px;border-radius:12px;min-width:200px;'>" +
                             "<div style='font-size:12px;color:#94a3b8;'>N&uacute;mero de cuenta</div>" +
                             "<div style='font-size:20px;font-weight:bold;letter-spacing:2px;'>{0}</div></div>", HE(numeroCuenta));
                     if (nombreCliente != null)
-                        sb.AppendFormat("<div class='saldo-card' style='padding:20px 28px;border-radius:12px;min-width:200px;'>" +
+                        sb.AppendFormat(
+                            "<div class='saldo-card' style='padding:20px 28px;border-radius:12px;min-width:200px;'>" +
                             "<div style='font-size:12px;color:#94a3b8;'>Titular</div>" +
                             "<div style='font-size:18px;font-weight:bold;'>{0}</div></div>", HE(nombreCliente));
                     sb.Append("</div>");
@@ -232,7 +233,6 @@ td{padding:10px 14px;border-bottom:1px solid #1e293b;font-size:13px}
             return Layout("Consultas", sb.ToString(), navbar: true, navUser: user, navDb: dbType);
         }
 
-        // ── usuarios page ─────────────────────────────────────────────
         public static string Usuarios(string user, string dbType,
             IEnumerable<dynamic> lista, string ok, string error)
         {
@@ -267,6 +267,11 @@ td{padding:10px 14px;border-bottom:1px solid #1e293b;font-size:13px}
                 sb.Append("<table><tr><th>#</th><th>Usuario</th><th>Nombre</th><th>Creado</th><th>Acci&oacute;n</th></tr>");
                 foreach (var u in rows)
                 {
+                    // u.id may be long (Dapper), convert to string explicitly
+                    string uid      = Convert.ToString(u.id);
+                    string uusuario = HE(Convert.ToString(u.usuario));
+                    string unombre  = HE(Convert.ToString(u.nombre));
+                    string ucreado  = Convert.ToString(u.creado_en);
                     sb.AppendFormat(
                         "<tr><td style='color:#64748b;'>{0}</td><td style='font-weight:bold;'>{1}</td>" +
                         "<td>{2}</td><td style='color:#64748b;font-size:12px;'>{3}</td>" +
@@ -277,7 +282,7 @@ td{padding:10px 14px;border-bottom:1px solid #1e293b;font-size:13px}
                         "<button style='background:#3b0f14;color:#ef4444;border:1px solid #ef4444;" +
                         "padding:4px 12px;border-radius:6px;font-size:12px;cursor:pointer;width:auto;'>Eliminar</button>" +
                         "</form></td></tr>",
-                        u.id, HE((string)u.usuario), HE((string)u.nombre), u.creado_en);
+                        uid, uusuario, unombre, ucreado);
                 }
                 sb.Append("</table>");
             }
@@ -288,7 +293,6 @@ td{padding:10px 14px;border-bottom:1px solid #1e293b;font-size:13px}
             return Layout("Usuarios", sb.ToString(), navbar: true, navUser: user, navDb: dbType);
         }
 
-        // ── HTML-encode helper ────────────────────────────────────────
         public static string HE(string s)
         {
             if (s == null) return "";

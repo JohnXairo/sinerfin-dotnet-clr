@@ -1,41 +1,38 @@
 using System;
 using System.Net.Http;
 using System.Web.Http;
+using Sinerfin.Config;
 using Sinerfin.Models;
 using Sinerfin.Repositories;
 
 namespace Sinerfin.Controllers
 {
     /// <summary>
-    /// GET /cliente?cedula=xxx
-    /// Endpoint JSON para autocompletar en el formulario de transaccion.
-    /// Usa Web API 2 (ApiController) para retornar JSON directo.
+    /// GET /cliente?cedula=xxx  — JSON endpoint for transaction form autocomplete.
+    /// dbType is passed as query param because there is no HttpContext.Current in OWIN self-host.
     /// </summary>
     public class ClienteController : ApiController
     {
+        private readonly DbConnectionFactory _factory;
         private readonly MovimientoRepository _repo;
 
-        public ClienteController(MovimientoRepository repo)
+        public ClienteController(DbConnectionFactory factory, MovimientoRepository repo)
         {
-            _repo = repo;
+            _factory = factory;
+            _repo    = repo;
         }
 
         [HttpGet]
-        public HttpResponseMessage Get([FromUri] string cedula)
+        public HttpResponseMessage Get([FromUri] string cedula, [FromUri] string db)
         {
-            var dbType = System.Web.HttpContext.Current?.Session?["dbType"] as string;
-            if (dbType == null)
-                return Request.CreateResponse(System.Net.HttpStatusCode.Unauthorized,
-                    new { error = "sin sesion" });
-
-            if (string.IsNullOrWhiteSpace(cedula))
+            if (string.IsNullOrWhiteSpace(cedula) || string.IsNullOrWhiteSpace(db))
                 return Request.CreateResponse(System.Net.HttpStatusCode.BadRequest,
-                    new { error = "cedula requerida" });
+                    new { error = "cedula y db requeridos" });
 
             DbProvider p;
-            if (!Enum.TryParse(dbType, out p))
-                return Request.CreateResponse(System.Net.HttpStatusCode.Unauthorized,
-                    new { error = "sin sesion" });
+            if (!Enum.TryParse(db, out p))
+                return Request.CreateResponse(System.Net.HttpStatusCode.BadRequest,
+                    new { error = "db invalido" });
 
             try
             {

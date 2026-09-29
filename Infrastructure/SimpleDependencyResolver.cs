@@ -7,8 +7,7 @@ using Sinerfin.Repositories;
 
 namespace Sinerfin.Infrastructure
 {
-    // Web API 2 DI resolver — only needed for ClienteController now
-    public class SimpleApiDependencyResolver : System.Web.Http.Dependencies.IDependencyResolver
+    public class SimpleApiDependencyResolver : IDependencyResolver
     {
         private readonly DbConnectionFactory _factory;
         private readonly MovimientoRepository _repo;
