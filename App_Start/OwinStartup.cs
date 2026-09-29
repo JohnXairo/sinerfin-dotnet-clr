@@ -1,4 +1,3 @@
-using System;
 using System.Web.Http;
 using System.Web.Mvc;
 using Microsoft.Owin;
@@ -17,30 +16,36 @@ namespace Sinerfin
     {
         public void Configuration(IAppBuilder app)
         {
-            // ── Sesiones (equivalente a AddSession en .NET Core) ───────
-            // En .NET FW las sesiones son nativas via System.Web.SessionState
-            // Se configuran en Web.config de Views (sessionState)
-
             // ── CORS ──────────────────────────────────────────────────
             app.UseCors(CorsOptions.AllowAll);
 
-            // ── Instanciar dependencias singleton ─────────────────────
+            // ── Dependencias singleton ────────────────────────────────
             var settings = DbSettings.FromAppConfig();
             var factory  = new DbConnectionFactory(settings);
             var repo     = new MovimientoRepository(factory);
 
-            // Registrar en el DependencyResolver de MVC
+            // ── MVC 5 DI ──────────────────────────────────────────────
             DependencyResolver.SetResolver(
                 new Infrastructure.SimpleMvcDependencyResolver(factory, repo));
 
-            // ── MVC 5 ─────────────────────────────────────────────────
-            AreaRegistration.RegisterAllAreas();
+            // ── Rutas MVC 5 ───────────────────────────────────────────
+            // AreaRegistration.RegisterAllAreas() NO se puede llamar en OWIN
+            // self-host — lanza InvalidOperationException en pre-start phase.
+            // Como no usamos Areas, simplemente se omite.
             MvcConfig.Register(System.Web.Routing.RouteTable.Routes);
 
-            // ── Web API 2 (solo para /cliente JSON endpoint) ──────────
+            // ── MVC 5 handler en el pipeline OWIN ─────────────────────
+            app.UseExternalSignInCookie(Microsoft.Owin.Security.DefaultAuthenticationTypes.ExternalCookie);
+            app.Use(async (context, next) =>
+            {
+                // Pasar el request por el pipeline OWIN antes de MVC
+                await next();
+            });
+
+            // ── Web API 2 (/cliente JSON endpoint) ────────────────────
             var apiConfig = new HttpConfiguration();
             var json = apiConfig.Formatters.JsonFormatter;
-            json.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+            json.SerializerSettings.ContractResolver  = new CamelCasePropertyNamesContractResolver();
             json.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
             apiConfig.Formatters.Remove(apiConfig.Formatters.XmlFormatter);
             apiConfig.MapHttpAttributeRoutes();
@@ -48,7 +53,6 @@ namespace Sinerfin
                 "ClienteApi", "cliente",
                 new { controller = "Cliente" });
 
-            // Resolver para Web API (ClienteController necesita MovimientoRepository)
             apiConfig.DependencyResolver =
                 new Infrastructure.SimpleApiDependencyResolver(factory, repo);
 
