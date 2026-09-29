@@ -32,7 +32,7 @@ namespace Sinerfin.Infrastructure
         {
             var req  = ctx.Request;
             var resp = ctx.Response;
-            var path = req.Path.Value?.ToLowerInvariant() ?? "/";
+            var path = req.Path.Value != null ? req.Path.Value.ToLowerInvariant() : "/";
             if (path == "") path = "/";
 
             // ── static: pass through to next middleware (Web API) ─────
@@ -284,7 +284,7 @@ namespace Sinerfin.Infrastructure
         {
             resp.StatusCode = 200;
             var bytes = Encoding.UTF8.GetBytes(html);
-            resp.ContentLength = bytes.Length;
+            resp.ContentLength = (long)bytes.Length;   // explicit cast int -> long
             return resp.Body.WriteAsync(bytes, 0, bytes.Length);
         }
 
