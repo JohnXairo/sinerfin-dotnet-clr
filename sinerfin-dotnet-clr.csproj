@@ -88,15 +88,16 @@
     <Reference Include="Oracle.ManagedDataAccess">
       <HintPath>packages\Oracle.ManagedDataAccess.21.15.0\lib\net462\Oracle.ManagedDataAccess.dll</HintPath>
     </Reference>
+    <!-- IBM DB2: agregar manualmente si tienes IBM Data Server Client instalado
     <Reference Include="IBM.Data.DB2">
-      <HintPath>packages\IBM.Data.DB2.LUW.11.5.9000.4\lib\net461\IBM.Data.DB2.dll</HintPath>
+      <HintPath>C:\Program Files\IBM\SQLLIB\BIN\netf40_64\IBM.Data.DB2.dll</HintPath>
     </Reference>
+    -->
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="App_Start\MvcConfig.cs" />
     <Compile Include="App_Start\OwinStartup.cs" />
-    <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Config\DbConnectionFactory.cs" />
     <Compile Include="Config\DbSettings.cs" />
     <Compile Include="Config\DbUtil.cs" />
@@ -107,6 +108,7 @@
     <Compile Include="Controllers\MovimientoController.cs" />
     <Compile Include="Controllers\PagesController.cs" />
     <Compile Include="Controllers\UsuarioController.cs" />
+    <Compile Include="Infrastructure\SimpleDependencyResolver.cs" />
     <Compile Include="Models\DbProvider.cs" />
     <Compile Include="Models\Movimiento.cs" />
     <Compile Include="Program.cs" />
