@@ -1,0 +1,73 @@
+@{
+    ViewData["Title"] = "Usuarios";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.ShowNavbar = true;
+    var lista = ViewBag.Lista as IEnumerable<dynamic>;
+    var ok    = ViewBag.Ok    as string;
+    var error = ViewBag.Error as string;
+}
+
+<div style="padding:32px 40px;max-width:1100px;">
+  <h2 style="margin-bottom:24px;">Gestión de Usuarios</h2>
+
+  @if (ok != null) {
+    <div class="alert-ok">
+      @(ok == "creado" ? "Usuario creado exitosamente." : "Usuario eliminado.")
+    </div>
+  }
+  @if (error != null) { <div class="alert-error">@error</div> }
+
+  <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start;">
+
+    <div class="saldo-card" style="padding:24px;border-radius:12px;min-width:320px;flex:1;">
+      <h3 style="margin-bottom:20px;font-size:16px;">Nuevo Usuario</h3>
+      <form action="/usuarios" method="post">
+        <label style="font-size:12px;color:#94a3b8;">Usuario (login)</label>
+        <input name="usuario" placeholder="ej: jperez" required style="margin-bottom:12px;">
+        <label style="font-size:12px;color:#94a3b8;">Nombre completo</label>
+        <input name="nombre" placeholder="ej: Juan Pérez" required style="margin-bottom:12px;">
+        <label style="font-size:12px;color:#94a3b8;">Contraseña</label>
+        <input type="password" name="password" placeholder="Mínimo 8 caracteres" required style="margin-bottom:12px;">
+        <label style="font-size:12px;color:#94a3b8;">Confirmar contraseña</label>
+        <input type="password" name="confirm" placeholder="Repetir contraseña" required style="margin-bottom:16px;">
+        <button style="width:100%;">Crear Usuario</button>
+      </form>
+    </div>
+
+    <div style="flex:2;min-width:400px;">
+      <h3 style="margin-bottom:16px;font-size:16px;">Usuarios Registrados</h3>
+      @if (lista != null && lista.Any()) {
+        <table style="width:100%;border-collapse:collapse;">
+          <tr>
+            <th style="background:#1e293b;padding:10px 14px;text-align:left;font-size:13px;">#</th>
+            <th style="background:#1e293b;padding:10px 14px;text-align:left;font-size:13px;">Usuario</th>
+            <th style="background:#1e293b;padding:10px 14px;text-align:left;font-size:13px;">Nombre</th>
+            <th style="background:#1e293b;padding:10px 14px;text-align:left;font-size:13px;">Creado</th>
+            <th style="background:#1e293b;padding:10px 14px;text-align:center;font-size:13px;">Acción</th>
+          </tr>
+          @foreach (var u in lista) {
+            <tr style="border-bottom:1px solid #1e293b;">
+              <td style="padding:10px 14px;color:#64748b;font-size:13px;">@u.id</td>
+              <td style="padding:10px 14px;font-weight:bold;">@u.usuario</td>
+              <td style="padding:10px 14px;">@u.nombre</td>
+              <td style="padding:10px 14px;color:#64748b;font-size:12px;">@u.creado_en</td>
+              <td style="padding:10px 14px;text-align:center;">
+                <form action="/usuarios" method="post" style="margin:0;"
+                      onsubmit="return confirm('Eliminar usuario @u.usuario?')">
+                  <input type="hidden" name="accion" value="eliminar">
+                  <input type="hidden" name="id" value="@u.id">
+                  <button style="background:#3b0f14;color:#ef4444;border:1px solid #ef4444;
+                    padding:4px 12px;border-radius:6px;font-size:12px;cursor:pointer;width:auto;">
+                    Eliminar
+                  </button>
+                </form>
+              </td>
+            </tr>
+          }
+        </table>
+      } else {
+        <div style="padding:30px;text-align:center;color:#64748b;">No hay usuarios registrados aún.</div>
+      }
+    </div>
+  </div>
+</div>

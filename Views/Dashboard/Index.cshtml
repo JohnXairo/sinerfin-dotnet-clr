@@ -1,0 +1,15 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.ShowNavbar = true;
+}
+
+<div class="dashboard">
+  <h1>Core Bancario Demo</h1>
+  <p style="color:#64748b;">Bienvenido, <b style="color:white;">@Session["user"]</b></p>
+  <p>Motor activo: <b style="color:#a3e635;">@Session["dbType"]</b></p>
+  <br>
+  <a href="/movimiento"><button style="width:250px;">Realizar Transacción</button></a>
+  <br><br>
+  <a href="/consulta"><button style="width:250px;">Consultar Movimientos</button></a>
+</div>

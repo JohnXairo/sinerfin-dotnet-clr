@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>@ViewData["Title"] - Sinerfin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  @if (ViewBag.ShowNavbar == true)
+  {
+    <div class="navbar">
+      <div><b>Sinerfin</b></div>
+      <div>
+        <span style="font-size:12px;color:#64748b;">
+          Motor: <b style="color:#a3e635;">@Session["dbType"]</b>
+        </span>
+        &nbsp;&nbsp;
+        <a href="/dashboard">Dashboard</a>
+        <a href="/movimiento">Transacciones</a>
+        <a href="/consulta">Consultas</a>
+        <a href="/usuarios">Usuarios</a>
+        <a href="/logout">Salir</a>
+      </div>
+    </div>
+  }
+  @RenderBody()
+</body>
+</html>

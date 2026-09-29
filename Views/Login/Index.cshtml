@@ -1,0 +1,55 @@
+@model string
+@{ ViewData["Title"] = "Login"; Layout = "~/Views/Shared/_Layout.cshtml"; }
+
+<div class="container">
+<div class="card">
+
+  <div class="logo">Sinerfin</div>
+
+  @if (Model == "1") {
+    <div class="alert-error">Usuario o contraseña incorrectos.</div>
+  } else if (Model == "2") {
+    <div class="alert-error">No se pudo conectar a la base de datos.</div>
+  }
+
+  <form action="/login" method="post">
+    Usuario:
+    <input name="username" autocomplete="username" required>
+
+    Contraseña:
+    <input type="password" name="password" autocomplete="current-password" required>
+
+    <h4>Seleccionar Base de Datos</h4>
+    <div class="db-grid">
+      <label class="db-card">
+        <input type="radio" name="db" value="POSTGRES" checked hidden>
+        <img src="/img/db/postgres.svg"><br>PostgreSQL
+      </label>
+      <label class="db-card">
+        <input type="radio" name="db" value="SQLSERVER" hidden>
+        <img src="/img/db/sqlserver.svg"><br>SQL Server
+      </label>
+      <label class="db-card">
+        <input type="radio" name="db" value="SQLSERVER_DEV" hidden>
+        <img src="/img/db/sqlserver.svg"><br>SQL Server<br>
+        <span style="font-size:10px;color:#a3e635;">Desarrollo</span>
+      </label>
+      <label class="db-card">
+        <input type="radio" name="db" value="MYSQL" hidden>
+        <img src="/img/db/mysql.svg"><br>MySQL
+      </label>
+      <label class="db-card">
+        <input type="radio" name="db" value="ORACLE" hidden>
+        <img src="/img/db/oracle.svg"><br>Oracle
+      </label>
+      <label class="db-card">
+        <input type="radio" name="db" value="DB2" hidden>
+        <img src="/img/db/db2.svg"><br>DB2
+      </label>
+    </div>
+    <br>
+    <button>Ingresar</button>
+  </form>
+
+</div>
+</div>

@@ -1,0 +1,83 @@
+@using Sinerfin.Models
+@{
+    ViewData["Title"] = "Consultas";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.ShowNavbar = true;
+    var cedula        = ViewBag.Cedula        as string;
+    var lista         = ViewBag.Lista         as IEnumerable<Movimiento>;
+    var saldo         = ViewBag.Saldo         as string;
+    var numeroCuenta  = ViewBag.NumeroCuenta;
+    var nombreCliente = ViewBag.NombreCliente as string;
+}
+
+<div style="padding:32px 40px;">
+  <h2 style="margin-bottom:24px;">Consulta de Movimientos</h2>
+
+  <form method="get" action="/consulta" style="display:flex;gap:12px;align-items:center;margin-bottom:28px;">
+    <input name="cedula" placeholder="Ingresa la cédula del cliente"
+           value="@(cedula ?? "")" style="width:320px;">
+    <button style="width:140px;">Buscar</button>
+    @if (cedula != null) {
+      <a href="/consulta" style="color:#64748b;font-size:13px;">Limpiar</a>
+    }
+  </form>
+
+  @if (lista == null) {
+    <div style="margin-top:80px;text-align:center;">
+      <div style="font-size:52px;margin-bottom:16px;">🔍</div>
+      <div style="font-size:18px;font-weight:bold;color:#64748b;">Ingresa una cédula para consultar</div>
+    </div>
+  } else {
+    @if (saldo != null) {
+      <div style="display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap;">
+        <div class="saldo-card" style="padding:20px 28px;border-radius:12px;min-width:200px;">
+          <div style="font-size:12px;color:#94a3b8;">Saldo actual</div>
+          <div style="color:#a3e635;font-size:28px;font-weight:bold;">$@saldo</div>
+        </div>
+        @if (numeroCuenta != null) {
+          <div class="saldo-card" style="padding:20px 28px;border-radius:12px;min-width:200px;">
+            <div style="font-size:12px;color:#94a3b8;">Número de cuenta</div>
+            <div style="font-size:20px;font-weight:bold;letter-spacing:2px;">@numeroCuenta</div>
+          </div>
+        }
+        @if (nombreCliente != null) {
+          <div class="saldo-card" style="padding:20px 28px;border-radius:12px;min-width:200px;">
+            <div style="font-size:12px;color:#94a3b8;">Titular</div>
+            <div style="font-size:18px;font-weight:bold;">@nombreCliente</div>
+          </div>
+        }
+        <div class="saldo-card" style="padding:20px 28px;border-radius:12px;min-width:180px;">
+          <div style="font-size:12px;color:#94a3b8;">Movimientos</div>
+          <div style="font-size:28px;font-weight:bold;">@lista.Count()</div>
+        </div>
+      </div>
+    }
+    @if (lista.Any()) {
+      <div class="table-container">
+        <table>
+          <tr><th>Cédula</th><th>Nombre</th><th>Cuenta</th><th>Tipo</th><th>Valor</th><th>Fecha</th></tr>
+          @foreach (var m in lista) {
+            <tr>
+              <td>@m.Cedula</td>
+              <td>@m.Nombre</td>
+              <td style="font-family:monospace;letter-spacing:1px;">@m.NumeroCuenta</td>
+              <td>
+                <span style="padding:3px 10px;border-radius:20px;font-size:12px;font-weight:bold;
+                  background:@(m.TipoMovimiento=="DEPOSITO"?"#052e16":"#3b0f14");
+                  color:@(m.TipoMovimiento=="DEPOSITO"?"#22c55e":"#ef4444");">
+                  @m.TipoMovimiento
+                </span>
+              </td>
+              <td style="font-weight:bold;">$@m.Valor.ToString("F2")</td>
+              <td style="color:#94a3b8;font-size:13px;">@(m.Fecha.HasValue ? m.Fecha.Value.ToString("g") : "")</td>
+            </tr>
+          }
+        </table>
+      </div>
+    } else {
+      <div style="padding:40px;text-align:center;color:#64748b;">
+        No se encontraron movimientos para la cédula <b>@cedula</b>.
+      </div>
+    }
+  }
+</div>

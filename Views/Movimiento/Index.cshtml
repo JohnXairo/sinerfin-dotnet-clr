@@ -1,0 +1,73 @@
+@model string
+@{
+    ViewData["Title"] = "Transacción";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.ShowNavbar = true;
+}
+
+<div class="container">
+<div class="card">
+  <h2>Transacción</h2>
+
+  @if (Model != null) {
+    <div class="alert-error">@Model</div>
+  }
+
+  <div id="cliente-card" style="display:none;background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:14px 18px;margin-bottom:18px;">
+    <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Cliente encontrado</div>
+    <div style="display:flex;gap:24px;align-items:center;">
+      <div>
+        <div style="font-size:11px;color:#94a3b8;">Titular</div>
+        <div id="cli-nombre" style="font-weight:bold;font-size:15px;"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#94a3b8;">Cuenta</div>
+        <div id="cli-cuenta" style="font-family:monospace;font-size:14px;letter-spacing:1px;"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#94a3b8;">Saldo actual</div>
+        <div id="cli-saldo" style="color:#a3e635;font-weight:bold;font-size:15px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <form action="/movimiento" method="post">
+    <div style="position:relative;">
+      <input id="cedula" name="cedula" placeholder="Cédula" required autocomplete="off" style="padding-right:40px;">
+      <span id="cedula-status" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:18px;display:none;"></span>
+    </div>
+    <input id="nombre" name="nombre" placeholder="Nombre" required>
+    <select name="tipo">
+      <option value="DEPOSITO">Depósito</option>
+      <option value="RETIRO">Retiro</option>
+    </select>
+    <input name="valor" placeholder="Valor" type="number" step="0.01" min="0.01" required>
+    <button>Procesar</button>
+  </form>
+</div>
+</div>
+
+<script>
+(function(){
+  var ci=document.getElementById('cedula'), ni=document.getElementById('nombre'),
+      st=document.getElementById('cedula-status'), cc=document.getElementById('cliente-card'), t=null;
+  function reset(){ cc.style.display='none'; ni.readOnly=false; ni.value=''; ni.style.color=''; st.style.display='none'; }
+  function show(d){
+    document.getElementById('cli-nombre').textContent=d.nombre;
+    document.getElementById('cli-cuenta').textContent=d.numeroCuenta;
+    document.getElementById('cli-saldo').textContent='$'+d.saldo;
+    cc.style.display='block'; ni.value=d.nombre; ni.readOnly=true; ni.style.color='#64748b';
+    st.textContent='\u2713'; st.style.color='#22c55e'; st.style.display='inline';
+  }
+  ci.addEventListener('input',function(){
+    reset(); clearTimeout(t);
+    if(ci.value.trim().length>=6){
+      st.textContent='\u27f3'; st.style.color='#94a3b8'; st.style.display='inline';
+      t=setTimeout(function(){
+        fetch('/cliente?cedula='+encodeURIComponent(ci.value.trim()))
+          .then(function(r){return r.json();}).then(function(d){d.encontrado?show(d):reset();}).catch(reset);
+      },600);
+    }
+  });
+})();
+</script>
