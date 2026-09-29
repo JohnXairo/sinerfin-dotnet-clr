@@ -18,26 +18,26 @@ namespace Sinerfin.Repositories
 
         public class CuentaInfo
         {
-            public long    NumeroCuenta { get; set; }
+            public string  NumeroCuenta { get; set; }
             public string  Cedula       { get; set; }
             public string  Nombre       { get; set; }
             public decimal Saldo        { get; set; }
         }
 
-        public long ObtenerOCrearCuenta(DbProvider p, string cedula, string nombre)
+        public string ObtenerOCrearCuenta(DbProvider p, string cedula, string nombre)
         {
             using (var conn = _factory.GetConnection(p))
             {
                 var t = DbUtil.T(p, "cuentas");
-                var existing = conn.QueryFirstOrDefault<long?>(
+                var existing = conn.QueryFirstOrDefault<string>(
                     "SELECT numero_cuenta FROM " + t + " WHERE cedula = @cedula",
                     new { cedula });
 
-                if (existing.HasValue) return existing.Value;
+                if (existing != null) return existing;
 
-                long num = long.Parse(
+                string num =
                     "10" + (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() % 100_000_000L)
-                              .ToString().PadLeft(8, '0'));
+                              .ToString().PadLeft(8, '0');
 
                 conn.Execute(
                     "INSERT INTO " + t + " (numero_cuenta, cedula, nombre, saldo) VALUES (@num, @ced, @nom, 0)",
@@ -59,7 +59,7 @@ namespace Sinerfin.Repositories
                 if (row == null) return null;
                 return new CuentaInfo
                 {
-                    NumeroCuenta = (long)row.numero_cuenta,
+                    NumeroCuenta = Convert.ToString(row.numero_cuenta),
                     Cedula       = cedula,
                     Nombre       = (string)row.nombre,
                     Saldo        = (decimal)row.saldo
