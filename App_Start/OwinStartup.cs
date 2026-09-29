@@ -29,18 +29,10 @@ namespace Sinerfin
                 new Infrastructure.SimpleMvcDependencyResolver(factory, repo));
 
             // ── Rutas MVC 5 ───────────────────────────────────────────
-            // AreaRegistration.RegisterAllAreas() NO se puede llamar en OWIN
-            // self-host — lanza InvalidOperationException en pre-start phase.
-            // Como no usamos Areas, simplemente se omite.
+            // NOTA: AreaRegistration.RegisterAllAreas() NO se puede llamar
+            // en OWIN self-host — lanza InvalidOperationException.
+            // No usamos Areas, se omite sin problema.
             MvcConfig.Register(System.Web.Routing.RouteTable.Routes);
-
-            // ── MVC 5 handler en el pipeline OWIN ─────────────────────
-            app.UseExternalSignInCookie(Microsoft.Owin.Security.DefaultAuthenticationTypes.ExternalCookie);
-            app.Use(async (context, next) =>
-            {
-                // Pasar el request por el pipeline OWIN antes de MVC
-                await next();
-            });
 
             // ── Web API 2 (/cliente JSON endpoint) ────────────────────
             var apiConfig = new HttpConfiguration();
